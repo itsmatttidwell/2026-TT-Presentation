@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retention Architecture™ - ThinkThru</title>
+    
+    <!-- Font Imports -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Custom Geist Mono (fallback to monospace) */
+        @font-face {
+            font-family: 'Geist Mono';
+            src: local('Courier New'), local('monospace');
+            font-weight: 400 500;
+        }
+
+        :root {
+            /* ThinkThru Color System */
+            --slate-50: #f8fafc;
+            --slate-200: #e2e8f0;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --white: #ffffff;
+            
+            /* Typography */
+            --font-geist: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-serif: 'Source Serif 4', Georgia, serif;
+            --font-mono: 'Geist Mono', 'Courier New', monospace;
+        }
+
+        body {
+            font-family: var(--font-geist);
+            background: var(--white);
+            color: var(--slate-700);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Main Container */
+        .deck-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--slate-50);
+            border-right: 1px solid var(--slate-200);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+            position: absolute;
+            z-index: -1;
+        }
+
+        .sidebar-logo {
+            margin-bottom: 2rem;
+            display: block;
+        }
+
+        .sidebar-logo img {
+            width: 180px;
+            height: auto;
+            display: block;
+        }
+
+        .chapter {
+            margin-bottom: 1.5rem;
+        }
+
+        .chapter-title {
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-500);
+            margin-bottom: 0.5rem;
+        }
+
+        .chapter-slides {
+            list-style: none;
+        }
+
+        .chapter-slides li {
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            color: var(--slate-600);
+            transition: all 0.2s;
+        }
+
+        .chapter-slides li:hover {
+            background: var(--slate-200);
+            color: var(--slate-900);
+        }
+
+        .chapter-slides li.active {
+            background: var(--slate-900);
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        /* Main Slide Area */
+        .slides-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        .slide-content {
+            max-width: 1100px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Background Patterns */
+        .slide.light-bg {
+            background: var(--white);
+            position: relative;
+        }
+
+        .slide.light-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(var(--slate-200) 1px, transparent 1px),
+                linear-gradient(90deg, var(--slate-200) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .slide.slate-bg {
+            background: var(--slate-50);
+        }
+
+        .slide.dark-bg {
+            background: var(--slate-900);
+            color: var(--white);
+        }
+
+        .slide.dark-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(var(--slate-700) 1px, transparent 1px),
+                linear-gradient(90deg, var(--slate-700) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Typography Styles */
+        .slide-title {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+            color: var(--slate-900);
+        }
+
+        .dark-bg .slide-title {
+            color: var(--white);
+        }
+
+        .slide-title.large {
+            font-size: 3.5rem;
+        }
+
+        .slide-title.medium {
+            font-size: 3rem;
+        }
+
+        .slide-subtitle {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--slate-600);
+            line-height: 1.6;
+            max-width: 800px;
+        }
+
+        .dark-bg .slide-subtitle {
+            color: var(--slate-200);
+        }
+
+        .section-head {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 3rem;
+            color: var(--slate-900);
+        }
+
+        .dark-bg .section-head {
+            color: var(--white);
+        }
+
+        .supporting-line {
+            font-size: 1.25rem;
+            color: var(--slate-500);
+            margin-top: 2rem;
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        .dark-bg .supporting-line {
+            color: #94a3b8;
+        }
+
+        /* Bullet Lists */
+        .bullet-list {
+            list-style: none;
+            margin-top: 2rem;
+        }
+
+        .bullet-list li {
+            font-size: 1.5rem;
+            line-height: 1.8;
+            color: var(--slate-700);
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .bullet-list li::before {
+            content: '—';
+            position: absolute;
+            left: 0;
+            color: var(--slate-500);
+            font-weight: 600;
+        }
+
+        .dark-bg .bullet-list li {
+            color: var(--slate-200);
+        }
+
+        .dark-bg .bullet-list li::before {
+            color: #94a3b8;
+        }
+
+        /* Zone Grid */
+        .zone-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .zone-card {
+            padding: 2rem;
+            border: 1px solid var(--slate-200);
+            border-radius: 0.5rem;
+            background: var(--white);
+        }
+
+        .dark-bg .zone-card {
+            background: var(--slate-800);
+            border-color: var(--slate-700);
+        }
+
+        .zone-number {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--slate-500);
+            margin-bottom: 0.5rem;
+        }
+
+        .zone-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--slate-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .dark-bg .zone-title {
+            color: var(--white);
+        }
+
+        .zone-description {
+            font-size: 1.125rem;
+            color: var(--slate-600);
+            line-height: 1.6;
+        }
+
+        .dark-bg .zone-description {
+            color: var(--slate-200);
+        }
+
+        /* Process Flow */
+        .process-flow {
+            display: flex;
+            gap: 1rem;
+            margin-top: 3rem;
+            align-items: center;
+        }
+
+        .process-step {
+            flex: 1;
+            text-align: center;
+            padding: 2rem;
+            background: var(--slate-50);
+            border-radius: 0.5rem;
+            border: 1px solid var(--slate-200);
+        }
+
+        .dark-bg .process-step {
+            background: var(--slate-800);
+            border-color: var(--slate-700);
+        }
+
+        .process-arrow {
+            font-size: 2rem;
+            color: var(--slate-500);
+        }
+
+        .process-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--slate-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .dark-bg .process-title {
+            color: var(--white);
+        }
+
+        .process-desc {
+            font-size: 1rem;
+            color: var(--slate-600);
+        }
+
+        .dark-bg .process-desc {
+            color: var(--slate-200);
+        }
+
+        /* Emphasis Box */
+        .emphasis-box {
+            background: var(--slate-900);
+            color: var(--white);
+            padding: 3rem;
+            border-radius: 0.5rem;
+            margin-top: 3rem;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+        }
+
+        .emphasis-box-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .emphasis-box-text {
+            font-size: 1.25rem;
+            color: var(--slate-200);
+            line-height: 1.6;
+        }
+
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--slate-500);
+            z-index: 100;
+            background: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--slate-200);
+        }
+
+        .dark-slide .slide-counter {
+            background: var(--slate-800);
+            color: var(--slate-200);
+            border-color: var(--slate-700);
+        }
+
+        .presentation-mode .slide-counter {
+            opacity: 0;
+        }
+
+        /* Presentation Mode */
+        .presentation-mode .sidebar {
+            display: none;
+        }
+
+        .presentation-mode .slide {
+            padding: 6rem;
+        }
+
+        /* Help Overlay */
+        .help-overlay {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--slate-900);
+            color: var(--white);
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 200;
+        }
+
+        .help-overlay.visible {
+            opacity: 1;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                overflow: visible;
+            }
+            
+            .sidebar,
+            .slide-counter,
+            .help-overlay {
+                display: none !important;
+            }
+            
+            .slides-container {
+                overflow: visible;
+            }
+            
+            .slide {
+                display: flex !important;
+                page-break-after: always;
+                height: 100vh;
+                position: relative;
+            }
+            
+            .slide:last-child {
+                page-break-after: auto;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: absolute;
+            }
+            
+            .slide {
+                padding: 2rem;
+            }
+            
+            .slide-title {
+                font-size: 2.5rem;
+            }
+            
+            .section-head {
+                font-size: 2rem;
+            }
+            
+            .zone-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .process-flow {
+                flex-direction: column;
+            }
+            
+            .process-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="deck-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-logo" onclick="toggleSidebar()" style="cursor: pointer; padding: 0.5rem 0; margin-bottom: 2rem;" title="Click to collapse/expand">
+                <img src="data:image/webp;base64,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" alt="ThinkThru Logo" style="width: 100%; height: auto; max-width: 200px;">
+            </div>
+            
+            <div class="chapter">
+                <div class="chapter-title">Problem</div>
+                <ul class="chapter-slides">
+                    <li data-slide="0">Cover</li>
+                    <li data-slide="1">Context</li>
+                    <li data-slide="2">Tension</li>
+                    <li data-slide="3">Reframe</li>
+                    <li data-slide="4">System Failure</li>
+                    <li data-slide="5">System Results</li>
+                </ul>
+            </div>
+            
+            <div class="chapter">
+                <div class="chapter-title">Solution</div>
+                <ul class="chapter-slides">
+                    <li data-slide="6">Category Statement</li>
+                    <li data-slide="7">Core Model</li>
+                    <li data-slide="8">The Six Zones</li>
+                </ul>
+            </div>
+            
+            <div class="chapter">
+                <div class="chapter-title">Proof</div>
+                <ul class="chapter-slides">
+                    <li data-slide="9">What We Build</li>
+                    <li data-slide="10">Outcomes</li>
+                    <li data-slide="11">How We Work</li>
+                </ul>
+            </div>
+            
+            <div class="chapter">
+                <div class="chapter-title">Ask</div>
+                <ul class="chapter-slides">
+                    <li data-slide="12">Next Step</li>
+                    <li data-slide="13">Close</li>
+                </ul>
+            </div>
+            
+            <div class="chapter">
+                <div class="chapter-title">Case Studies</div>
+                <ul class="chapter-slides">
+                    <li data-slide="14">Cellebrite</li>
+                    <li data-slide="15">Reveal Data</li>
+                    <li data-slide="16">Empathetics</li>
+                    <li data-slide="17">BAE Systems</li>
+                    <li data-slide="18">Deloitte (SecureRelease)</li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Slides Container -->
+        <div class="slides-container" id="slidesContainer">
+            <!-- Slide 1: Title -->
+            <div class="slide dark-bg active" data-slide="0">
+                <div class="slide-content">
+                    <h1 class="slide-title">Retention Is Not a Team Problem<br>It's an Architecture Problem</h1>
+                    <p class="slide-subtitle">We unify content strategy, instructional design, and creative production to build education systems that connect every team and every customer touchpoint.</p>
+                </div>
+            </div>
+
+            <!-- Slide 2: Context -->
+            <div class="slide light-bg" data-slide="1">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <h2 class="section-head" style="margin-bottom: 1rem;">
+                        Evolution of Buyer Behaviors
+                    </h2>
+                    <p style="font-family: var(--font-mono); font-size: 1rem; color: var(--slate-600); margin-bottom: 2.5rem; max-width: 900px;">
+                        B2B buyers now discover, research and evaluate products in entirely new ways.
+                    </p>
+
+                    <!-- Three-column layout -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--slate-200); border: 1px solid var(--slate-200);">
+                        <!-- Column 1: Analog Buying Era -->
+                        <div style="background: white; padding: 2rem; display: flex; flex-direction: column;">
+                            <div style="margin-bottom: 1.5rem;">
+                                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem;">Analog Buying Era</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em;">Previously</span>
+                            </div>
+                            
+                            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; flex: 1;">
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Fewer sources of information</span>
+                                </li>
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Buyers saw peers once or twice per year at conferences and tradeshows</span>
+                                </li>
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Sellers could control the flow of information through planned interactions</span>
+                                </li>
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Buyers spent more time with vendor representatives gathering info they now obtain through 3rd party sources</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Column 2: Website Era -->
+                        <div style="background: white; padding: 2rem; display: flex; flex-direction: column;">
+                            <div style="margin-bottom: 1.5rem;">
+                                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Website Era</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: block;">Access to Information</span>
+                                <p style="font-size: 0.875rem; font-weight: 600; color: var(--slate-700); margin: 0;">New Dynamics:</p>
+                            </div>
+                            
+                            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; flex: 1;">
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Access to endless, always-on information across the internet</span>
+                                </li>
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Ability to complete the entire buying process/ evaluation independently</span>
+                                </li>
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Buying decisions are based on evolving criteria, wider set of stakeholders, and are more independent than ever</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Column 3: Dark Social Era -->
+                        <div style="background: var(--slate-50); padding: 2rem; display: flex; flex-direction: column; border-left: 3px solid var(--slate-900);">
+                            <div style="margin-bottom: 1.5rem;">
+                                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Dark Social Era</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Access to Peers</span>
+                            </div>
+                            
+                            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; flex: 1;">
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Hyper connection of B2B peers through digital channels like social networks, communities, and word-of-mouth has scaled education, advocacy, sharing and consumption</span>
+                                </li>
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Today's buyer does their own research using trusted peers and prefers to remain anonymous until ready to start a sales conversation</span>
+                                </li>
+                                <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Today's buyer is often the customer, where user-led decisions control the buying experience: emotions, motivations, and peer influence plays a larger role</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Tension -->
+            <div class="slide light-bg" data-slide="2">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 3rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #ef4444;"></div>
+                                Market Reality
+                            </div>
+                            <h2 style="font-size: 3rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; max-width: 900px; margin-bottom: 1rem;">
+                                Retention Now Starts Before the Sale
+                            </h2>
+                            <p style="font-family: var(--font-mono); font-size: 1rem; color: var(--slate-600); max-width: 800px; line-height: 1.6;">
+                                Expectations are formed before onboarding ever begins — and those expectations determine whether customers stay.
+                            </p>
+                        </div>
+
+                        <!-- Content grid -->
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--slate-200);">
+                            <!-- Left column: narrative -->
+                            <div style="background: white; padding: 3rem; display: flex; flex-direction: column; justify-content: center;">
+                                <p style="color: var(--slate-600); line-height: 1.6; margin-bottom: 1rem; font-size: 1.125rem;">
+                                    Buyers now learn in the wild—on LinkedIn, YouTube, Slack communities, dark social, and self-guided research.
+                                </p>
+                                <p style="color: var(--slate-600); line-height: 1.6; margin-bottom: 1rem; font-size: 1.125rem;">
+                                    They talk to a rep <span style="font-weight: 600; color: var(--slate-900);">last</span>.
+                                </p>
+                                <p style="color: var(--slate-600); line-height: 1.6; margin-bottom: 1rem; font-size: 1.125rem;">
+                                    They judge your product <span style="font-weight: 600; color: var(--slate-900);">long before</span> they log into it.
+                                </p>
+                                <p style="color: var(--slate-600); line-height: 1.6; font-size: 1.125rem;">
+                                    And they churn the moment <span style="font-weight: 600; color: var(--slate-900);">friction outweighs value</span>.
+                                </p>
+                            </div>
+
+                            <!-- Right column: stats -->
+                            <div style="background: white; padding: 3rem; display: flex; flex-direction: column; gap: 2.5rem; justify-content: center;">
+                                <div>
+                                    <div style="font-size: 3.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">75%</div>
+                                    <div style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                                        Gartner B2B Buying Report
+                                    </div>
+                                    <p style="color: var(--slate-600); max-width: 400px; line-height: 1.6;">
+                                        Of B2B buyers prefer a rep-free sales experience, but these purchases are 
+                                        <span style="font-weight: 600; color: var(--slate-900); background: #fef2f2; padding: 0 0.25rem; border-radius: 2px;">1.6x more likely to lead to regret</span>.
+                                    </p>
+                                </div>
+
+                                <div style="height: 1px; width: 100%; background: var(--slate-200);"></div>
+
+                                <div>
+                                    <div style="font-size: 3.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">32%</div>
+                                    <div style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                                        PwC Future of CX
+                                    </div>
+                                    <p style="color: var(--slate-600); max-width: 400px; line-height: 1.6;">
+                                        Of customers leave after just 
+                                        <span style="font-weight: 600; color: var(--slate-900); background: #fef2f2; padding: 0 0.25rem; border-radius: 2px;">one poor experience</span>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Reframe -->
+            <div class="slide light-bg" data-slide="3">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 3rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #ef4444;"></div>
+                                The Reframe
+                            </div>
+                            <h2 style="font-size: 3rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; max-width: 1000px;">
+                                Renewal is a lagging indicator — not a control point.
+                            </h2>
+                        </div>
+
+                        <!-- Three-column grid -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--slate-200);">
+                            <!-- Column 1 -->
+                            <div style="background: white; padding: 3rem; display: flex; align-items: center;">
+                                <p style="color: var(--slate-700); line-height: 1.8; font-size: 1.25rem;">
+                                    Renewal reflects the entire experience leading up to it
+                                </p>
+                            </div>
+
+                            <!-- Column 2 -->
+                            <div style="background: white; padding: 3rem; display: flex; align-items: center;">
+                                <p style="color: var(--slate-700); line-height: 1.8; font-size: 1.25rem;">
+                                    Confidence, clarity, and momentum are built (or lost) months earlier
+                                </p>
+                            </div>
+
+                            <!-- Column 3 -->
+                            <div style="background: white; padding: 3rem; display: flex; align-items: center;">
+                                <p style="color: var(--slate-700); line-height: 1.8; font-size: 1.25rem;">
+                                    By the time churn is visible, the system has already broken
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Footer emphasis -->
+                        <div style="background: var(--slate-900); padding: 2rem 3rem; text-align: center;">
+                            <p style="font-size: 1.25rem; font-weight: 600; color: white; font-family: var(--font-mono); letter-spacing: 0.02em;">
+                                Renewal reveals the outcome — not the cause
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: System Failure -->
+            <div class="slide light-bg" data-slide="4">
+                <div class="slide-content" style="max-width: 1200px;">
+                    <h2 class="section-head" style="margin-bottom: 3rem;">When teams optimize independently, customers experience the gaps.</h2>
+                    
+                    <!-- Four boxes in 2x2 grid -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--slate-200); border: 1px solid var(--slate-200); margin-bottom: 3rem;">
+                        <!-- Marketing -->
+                        <div style="background: white; padding: 2.5rem;">
+                            <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Marketing</h3>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.6;">Shapes belief and expectation</p>
+                        </div>
+
+                        <!-- Sales -->
+                        <div style="background: white; padding: 2.5rem;">
+                            <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Sales</h3>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.6;">Earns commitment and frames success</p>
+                        </div>
+
+                        <!-- Product -->
+                        <div style="background: white; padding: 2.5rem;">
+                            <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Product</h3>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.6;">Creates capability and potential value</p>
+                        </div>
+
+                        <!-- Customer Success -->
+                        <div style="background: white; padding: 2.5rem;">
+                            <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Customer Success</h3>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.6;">Protects momentum and guides change</p>
+                        </div>
+                    </div>
+
+                    <!-- Bottom emphasis section -->
+                    <div style="max-width: 800px;">
+                        <p style="font-size: 1.25rem; color: var(--slate-600); line-height: 1.8; margin-bottom: 1rem;">
+                            Work becomes duplicated. Processes turn reactive. Ownership blurs.
+                        </p>
+                        <p style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900);">
+                            Retention suffers as a result.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: System Results -->
+            <div class="slide light-bg" data-slide="5">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 3rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                                System Results
+                            </div>
+                            <h2 style="font-size: 3rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; max-width: 1000px; margin-bottom: 1rem;">
+                                Activity Increases — But Outcomes Don't Improve
+                            </h2>
+                            <p style="font-family: var(--font-mono); font-size: 1rem; color: var(--slate-600); max-width: 800px;">
+                                Reactive Work Scales Faster Than Results
+                            </p>
+                        </div>
+
+                        <!-- Content -->
+                        <div style="padding: 3rem;">
+                            <!-- Three card stack -->
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <!-- Card 1 -->
+                                <div style="background: white; border: 1px solid var(--slate-200); padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem;">
+                                    <div style="color: var(--slate-500); font-size: 1.25rem; flex-shrink: 0;">●</div>
+                                    <p style="font-size: 1.125rem; color: var(--slate-700); line-height: 1.6;">
+                                        CSMs fill gaps with custom onboarding and Looms
+                                    </p>
+                                </div>
+
+                                <!-- Card 2 -->
+                                <div style="background: white; border: 1px solid var(--slate-200); padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem;">
+                                    <div style="color: var(--slate-500); font-size: 1.25rem; flex-shrink: 0;">●</div>
+                                    <p style="font-size: 1.125rem; color: var(--slate-700); line-height: 1.6;">
+                                        Education is created after friction appears
+                                    </p>
+                                </div>
+
+                                <!-- Card 3 -->
+                                <div style="background: white; border: 1px solid var(--slate-200); padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem;">
+                                    <div style="color: var(--slate-500); font-size: 1.25rem; flex-shrink: 0;">●</div>
+                                    <p style="font-size: 1.125rem; color: var(--slate-700); line-height: 1.6;">
+                                        Content exists, but ownership and outcomes are unclear
+                                    </p>
+                                </div>
+                            </div>
+
+                            <p class="supporting-line" style="margin-top: 2rem;">The burden shifts to Customer Success — without fixing the root cause.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: Category Statement -->
+            <div class="slide dark-bg" data-slide="6">
+                <div class="slide-content">
+                    <h2 class="section-head">Retention Is Not Owned.<br>It's Designed.</h2>
+                    <ul style="list-style: none; padding: 0; margin-top: 2rem;">
+                        <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; line-height: 1.8; color: var(--slate-200); padding-left: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Retention is not a KPI.</span>
+                        </li>
+                        <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; line-height: 1.8; color: var(--slate-200); padding-left: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Retention is not a department.</span>
+                        </li>
+                        <li style="margin-bottom: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; line-height: 1.8; color: var(--slate-200); padding-left: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                            <span>Retention is the intentional design of how value is delivered, reinforced, and realized over time.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Slide 8: Core Model -->
+            <div class="slide dark-bg" data-slide="7">
+                <div class="slide-content">
+                    <h2 class="section-head" style="margin-bottom: 2rem;">Retention Architecture™</h2>
+                    
+                    <p class="slide-subtitle" style="font-size: 1.5rem; line-height: 1.8; margin-bottom: 2rem;">
+                        Retention Architecture is the intentional design of how value is communicated, activated, reinforced, and expanded across the entire customer lifecycle.
+                    </p>
+                    
+                    <p class="slide-subtitle" style="font-size: 1.5rem; line-height: 1.8;">
+                        It aligns teams around a shared system — turning experience into intelligence and trust.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Slide 9: The Six Zones -->
+            <div class="slide light-bg" data-slide="8">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em;">
+                            <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                            The Framework
+                        </div>
+                    </div>
+                    <h2 class="section-head" style="margin-bottom: 2rem;">The Six Zones Where Retention Actually Breaks Down</h2>
+                    
+                    <!-- 6-column grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--slate-200); border: 1px solid var(--slate-200); margin-top: 2rem;">
+                        <!-- Zone 1: Belief -->
+                        <div style="background: white; display: flex; flex-direction: column;">
+                            <div style="height: 160px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); position: relative; padding: 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <div style="position: relative; z-index: 10; width: 64px; height: 64px; border-radius: 12px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                </div>
+                                <span style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none;">01</span>
+                            </div>
+                            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                                <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Belief</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Authority & Expectation</span>
+                                <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; flex: 1;">Pre-purchase trust signals that shape buyer expectations</p>
+                            </div>
+                        </div>
+
+                        <!-- Zone 2: Commitment -->
+                        <div style="background: white; display: flex; flex-direction: column;">
+                            <div style="height: 160px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); position: relative; padding: 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <div style="position: relative; z-index: 10; width: 64px; height: 64px; border-radius: 12px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                </div>
+                                <span style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none;">02</span>
+                            </div>
+                            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                                <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Commitment</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Decision Confidence</span>
+                                <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; flex: 1;">Post-purchase stability and decision reinforcement</p>
+                            </div>
+                        </div>
+
+                        <!-- Zone 3: Activation -->
+                        <div style="background: white; display: flex; flex-direction: column;">
+                            <div style="height: 160px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); position: relative; padding: 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <div style="position: relative; z-index: 10; width: 64px; height: 64px; border-radius: 12px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                </div>
+                                <span style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none;">03</span>
+                            </div>
+                            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                                <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Activation</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">First Value</span>
+                                <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; flex: 1;">Time-to-value delivery and momentum building</p>
+                            </div>
+                        </div>
+
+                        <!-- Zone 4: Realization -->
+                        <div style="background: white; display: flex; flex-direction: column;">
+                            <div style="height: 160px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); position: relative; padding: 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <div style="position: relative; z-index: 10; width: 64px; height: 64px; border-radius: 12px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                </div>
+                                <span style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none;">04</span>
+                            </div>
+                            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                                <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Realization</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Feature → Outcome</span>
+                                <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; flex: 1;">Translating features into meaningful outcomes</p>
+                            </div>
+                        </div>
+
+                        <!-- Zone 5: Expansion -->
+                        <div style="background: white; display: flex; flex-direction: column;">
+                            <div style="height: 160px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); position: relative; padding: 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <div style="position: relative; z-index: 10; width: 64px; height: 64px; border-radius: 12px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                                </div>
+                                <span style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none;">05</span>
+                            </div>
+                            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                                <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Expansion</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">ROI & Growth</span>
+                                <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; flex: 1;">Compounding value and expansion opportunities</p>
+                            </div>
+                        </div>
+
+                        <!-- Zone 6: Recognition -->
+                        <div style="background: white; display: flex; flex-direction: column;">
+                            <div style="height: 160px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); position: relative; padding: 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <div style="position: relative; z-index: 10; width: 64px; height: 64px; border-radius: 12px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                </div>
+                                <span style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none;">06</span>
+                            </div>
+                            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                                <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Recognition</h3>
+                                <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Identity & Advocacy</span>
+                                <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; flex: 1;">Belonging, identity formation, and customer advocacy</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="supporting-line" style="margin-top: 2rem; text-align: center;">Retention fails when these zones don't connect.</p>
+                </div>
+            </div>
+
+            <!-- Slide 9: What We Build -->
+            <div class="slide light-bg" data-slide="9">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 3rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                                What We Build
+                            </div>
+                            <h2 style="font-size: 3rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; max-width: 1000px; margin-bottom: 1rem;">
+                                Education as Infrastructure
+                            </h2>
+                            <p style="font-family: var(--font-mono); font-size: 1rem; color: var(--slate-600); max-width: 900px; line-height: 1.6;">
+                                Reduces onboarding load, support volume, and reactive CS work — before adding headcount.
+                            </p>
+                        </div>
+
+                        <!-- Content grid -->
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--slate-200);">
+                            <!-- Left column: What we design -->
+                            <div style="background: white; padding: 3rem; display: flex; flex-direction: column;">
+                                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1.5rem;">What we design</h3>
+                                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem;">
+                                    <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 1.125rem; line-height: 1.6;">
+                                        <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                        <span>Retention and education strategy aligned to your customer journey</span>
+                                    </li>
+                                    <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 1.125rem; line-height: 1.6;">
+                                        <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                        <span>Systems that connect belief, onboarding, adoption, and expansion</span>
+                                    </li>
+                                    <li style="display: flex; gap: 0.5rem; color: var(--slate-700); font-size: 1.125rem; line-height: 1.6;">
+                                        <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                        <span>Clear ownership and sequencing across teams</span>
+                                    </li>
+                                </ul>
+                                
+                                <!-- Testimonial -->
+                                <div style="margin-top: 2.5rem; padding-top: 2.5rem; border-top: 1px solid var(--slate-200);">
+                                    <div style="background: var(--slate-50); padding: 1.5rem; border-radius: 4px;">
+                                        <div style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; margin-bottom: 1rem; font-style: italic;">
+                                            "Here's is the email I received my from VP. Please the team know they rock.... 'THIS VIDEO IS AMAZING. I am in love with this video. It looks and feels polished and is easy to follow.'"
+                                        </div>
+                                        <div style="font-size: 0.875rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Shelly Fox</div>
+                                        <div style="font-size: 0.875rem; color: var(--slate-600);">Solutions Manager, (Big 4 Consulting Firm)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right column: What we build -->
+                            <div style="background: white; padding: 3rem; display: flex; flex-direction: column; gap: 0;">
+                                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1.5rem;">What we build</h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 0;">
+                                    <div style="padding: 1.5rem 0;">
+                                        <p style="color: var(--slate-700); font-size: 1.125rem; line-height: 1.6; margin: 0;">
+                                            <strong>Product Onboarding</strong> that delivers first value without white-glove lift
+                                        </p>
+            </div>
+
+                                    <div style="height: 1px; width: 100%; background: var(--slate-200);"></div>
+
+                                    <div style="padding: 1.5rem 0;">
+                                        <p style="color: var(--slate-700); font-size: 1.125rem; line-height: 1.6; margin: 0;">
+                                            <strong>Product Training & Documentation</strong> tied to real customer outcomes
+                                        </p>
+                        </div>
+
+                                    <div style="height: 1px; width: 100%; background: var(--slate-200);"></div>
+
+                                    <div style="padding: 1.5rem 0;">
+                                        <p style="color: var(--slate-700); font-size: 1.125rem; line-height: 1.6; margin: 0;">
+                                            <strong>Customer Academies</strong> that unify learning across the lifecycle
+                                        </p>
+                                    </div>
+
+                                    <div style="height: 1px; width: 100%; background: var(--slate-200);"></div>
+
+                                    <div style="padding: 1.5rem 0;">
+                                        <p style="color: var(--slate-700); font-size: 1.125rem; line-height: 1.6; margin: 0;">
+                                            <strong>Social & Thought Leadership</strong> that shapes expectations before purchase
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: Outcomes -->
+            <div class="slide light-bg" data-slide="10">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <h2 class="section-head" style="margin-bottom: 3rem;">Client Outcomes</h2>
+                    
+                    <!-- Four outcome boxes -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 3rem;">
+                        <!-- Box 1: Faster Time-to-Value -->
+                        <div style="border: 1px solid var(--slate-200); background: white; padding: 2rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1rem; line-height: 1.3;">Faster Time-to-Value</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Customers reach first value with less hand-holding</span>
+                                </li>
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Onboarding scales without white-glove lift</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Box 2: Lower Operational Load -->
+                        <div style="border: 1px solid var(--slate-200); background: white; padding: 2rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1rem; line-height: 1.3;">Lower Operational Load</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Reduced reactive CS and support work</span>
+                                </li>
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Fewer duplicated efforts across teams</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Box 3: Stronger Adoption & Confidence -->
+                        <div style="border: 1px solid var(--slate-200); background: white; padding: 2rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1rem; line-height: 1.3;">Stronger Adoption & Confidence</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Clear paths from features to outcomes</span>
+                                </li>
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Customers know how — and why — to use the product</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Box 4: Retention & Expansion Enablement -->
+                        <div style="border: 1px solid var(--slate-200); background: white; padding: 2rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1rem; line-height: 1.3;">Retention & Expansion Enablement</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Higher renewal confidence driven by realized value</span>
+                                </li>
+                                <li style="font-size: 1rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>Education supports upsell, certification, and advocacy</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Full Width Testimonial Box -->
+                    <div style="border: 1px solid var(--slate-200); background: white; padding: 3rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                                <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/>
+                                <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>
+                            </svg>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em;">Featured Testimonial</span>
+                            </div>
+                        </div>
+
+                        <blockquote style="font-size: 1.25rem; color: var(--slate-900); line-height: 1.7; margin: 0 0 2rem 0; font-weight: 400;">
+                            "Matt, consider this a testimonial to you and your business model. It's truly unlike any other I've seen, and your team's help has helped my team make real progress. I look forward to more engagements with ThinkThru in my next adventure!"
+                        </blockquote>
+                        
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 48px; height: 48px; border-radius: 4px; background: var(--slate-200); flex-shrink: 0;"></div>
+                            <div>
+                                <div style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Toddi Norum</div>
+                                <div style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.5;">
+                                    Training Manager and LMS Implementation Guru<br>
+                                    <span style="font-weight: 500;">BAE Systems</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 11: How We Work -->
+            <div class="slide light-bg" data-slide="11">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <!-- Header -->
+                    <div style="margin-bottom: 4rem;">
+                        <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem;">
+                        <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                        Get Started
+                    </div>
+                        <h2 style="font-size: 3rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; max-width: 1000px; margin-bottom: 1rem;">
+                        How We Work
+                    </h2>
+                        <p style="font-size: 1.25rem; color: var(--slate-600); max-width: 900px; line-height: 1.6;">
+                        Start with evidence. Fix the constraint. Scale only what works.
+                    </p>
+                    </div>
+
+                    <!-- Connected boxes grid -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border: 1px solid var(--slate-200); overflow: hidden; background: white;">
+                        <!-- Box 1: Diagnose -->
+                        <div style="padding: 3rem 2rem; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                            <div style="width: 100%; height: 128px; background: var(--slate-50); border: 1px solid #f1f5f9; margin-bottom: 1.5rem; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <span style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none; z-index: 5;">01</span>
+                                <div style="width: 56px; height: 56px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Step 01</span>
+                            </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem; line-height: 1.3;">
+                                Diagnose
+                            </h3>
+                            <p style="font-size: 1rem; color: var(--slate-600); line-height: 1.6; margin: 0;">
+                                Diagnose where retention is breaking
+                            </p>
+                        </div>
+
+                        <!-- Box 2: Design -->
+                        <div style="padding: 3rem 2rem; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                            <div style="width: 100%; height: 128px; background: var(--slate-50); border: 1px solid #f1f5f9; margin-bottom: 1.5rem; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <span style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none; z-index: 5;">02</span>
+                                <div style="width: 56px; height: 56px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Step 02</span>
+                            </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem; line-height: 1.3;">
+                                Design
+                            </h3>
+                            <p style="font-size: 1rem; color: var(--slate-600); line-height: 1.6; margin: 0;">
+                                Design the system before adding effort
+                            </p>
+                        </div>
+
+                        <!-- Box 3: Execute -->
+                        <div style="padding: 3rem 2rem; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                            <div style="width: 100%; height: 128px; background: var(--slate-50); border: 1px solid #f1f5f9; margin-bottom: 1.5rem; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <span style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none; z-index: 5;">03</span>
+                                <div style="width: 56px; height: 56px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Step 03</span>
+                            </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem; line-height: 1.3;">
+                                Execute
+                            </h3>
+                            <p style="font-size: 1rem; color: var(--slate-600); line-height: 1.6; margin: 0;">
+                                Execute only what reduces friction and rework
+                            </p>
+                        </div>
+
+                        <!-- Box 4: Adapt -->
+                        <div style="padding: 3rem 2rem; display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                            <div style="width: 100%; height: 128px; background: var(--slate-50); border: 1px solid #f1f5f9; margin-bottom: 1.5rem; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <span style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none; z-index: 5;">04</span>
+                                <div style="width: 56px; height: 56px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Step 04</span>
+                            </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem; line-height: 1.3;">
+                                Adapt
+                            </h3>
+                            <p style="font-size: 1rem; color: var(--slate-600); line-height: 1.6; margin: 0;">
+                                Adapt as the product and customer base evolve
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Stats and Awards -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem;">
+                        <!-- Stat Box 1 -->
+                        <div style="border: 1px solid var(--slate-200); background: white; padding: 2rem; text-align: center;">
+                            <div style="font-size: 3.5rem; font-weight: 700; color: var(--slate-900); line-height: 1; margin-bottom: 0.5rem;">3,000+</div>
+                            <div style="font-size: 0.875rem; color: var(--slate-700); line-height: 1.5;">Training and product videos developed for clients.</div>
+                        </div>
+                        
+                        <!-- Stat Box 2 -->
+                        <div style="border: 1px solid var(--slate-200); background: white; padding: 2rem; text-align: center;">
+                            <div style="font-size: 3.5rem; font-weight: 700; color: var(--slate-900); line-height: 1; margin-bottom: 0.5rem;">98K+</div>
+                            <div style="font-size: 0.875rem; color: var(--slate-700); line-height: 1.5;">Learners served globally to date.</div>
+                        </div>
+                        
+                        <!-- Awards Box -->
+                        <div style="background: var(--slate-900); padding: 2rem; border: 1px solid var(--slate-900); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 0.75rem;">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                            </svg>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 0.25rem;">20+ Awards</div>
+                            <div style="font-size: 0.875rem; color: rgba(255,255,255,0.8);">20+ industry awards for training and multimedia excellence</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 12: Next Step -->
+            <div class="slide light-bg" data-slide="12">
+                <div class="slide-content" style="max-width: 1400px;">
+                        <!-- Header -->
+                    <div style="margin-bottom: 4rem;">
+                            <h2 style="font-size: 3rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; max-width: 1000px; margin-bottom: 1rem;">
+                            Start with the Retention Architecture Assessment
+                            </h2>
+                        </div>
+
+                    <!-- Three steps grid -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--slate-200); overflow: hidden; background: white;">
+                        <!-- Step 1 -->
+                        <div style="padding: 3rem 2rem; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                            <div style="width: 100%; height: 128px; background: var(--slate-50); border: 1px solid #f1f5f9; margin-bottom: 1.5rem; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <span style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none; z-index: 5;">01</span>
+                                <div style="width: 56px; height: 56px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                                    </svg>
+                            </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Step 01</span>
+                        </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem; line-height: 1.3;">
+                                Take the Assessment
+                            </h3>
+                            <p style="font-size: 1rem; color: var(--slate-600); line-height: 1.6; margin: 0;">
+                                You and a few key team members complete a short assessment to identify where retention is breaking across the customer journey.
+                            </p>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div style="padding: 3rem 2rem; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                            <div style="width: 100%; height: 128px; background: var(--slate-50); border: 1px solid #f1f5f9; margin-bottom: 1.5rem; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <span style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none; z-index: 5;">02</span>
+                                <div style="width: 56px; height: 56px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                </div>
+            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Step 02</span>
+                </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem; line-height: 1.3;">
+                                Review the Results Together
+                            </h3>
+                            <p style="font-size: 1rem; color: var(--slate-600); line-height: 1.6; margin: 0;">
+                                We walk through the findings with you, align on the real constraint, and discuss what's actually driving friction and rework.
+                            </p>
+                            </div>
+
+                        <!-- Step 3 -->
+                        <div style="padding: 3rem 2rem; display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                            <div style="width: 100%; height: 128px; background: var(--slate-50); border: 1px solid #f1f5f9; margin-bottom: 1.5rem; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--slate-200) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+                                <span style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 3rem; font-weight: 700; color: var(--slate-200); user-select: none; z-index: 5;">03</span>
+                                <div style="width: 56px; height: 56px; background: white; border: 1px solid var(--slate-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                                    </svg>
+                            </div>
+                        </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #3b82f6;"></div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Step 03</span>
+                        </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem; line-height: 1.3;">
+                                Define the Right Engagement
+                            </h3>
+                            <p style="font-size: 1rem; color: var(--slate-600); line-height: 1.6; margin: 0;">
+                                Based on the diagnosis, we propose a focused sprint or project engagement — scoped to fix the constraint, not sell unnecessary work.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 13: Close -->
+            <div class="slide dark-bg" data-slide="13" style="position: relative;">
+                <div class="slide-content">
+                    <p style="font-size: 2rem; color: var(--slate-200); line-height: 1.4; margin-bottom: 0.5rem; font-weight: 400;">Retention is not a metric.</p>
+                    <p style="font-size: 2rem; color: var(--slate-200); line-height: 1.4; margin-bottom: 0.5rem; font-weight: 400;">It is not a department.</p>
+                    <p style="font-size: 2rem; color: var(--slate-200); line-height: 1.4; margin-bottom: 3rem; font-weight: 400;">It is not a phase.</p>
+                    <h1 class="slide-title" style="font-size: 4rem; font-weight: 700; color: var(--white); margin-bottom: 0;">Retention is architecture.</h1>
+                    </div>
+                <div style="position: absolute; bottom: 4rem; right: 4rem;">
+                    <img src="thinkthru_logo_white.png" alt="ThinkThru Logo" style="height: 48px; width: auto;">
+                </div>
+            </div>
+
+            <!-- Slide 14: Case Study 1 - Cellebrite -->
+            <div class="slide light-bg" data-slide="14">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 2rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                                Case Study
+                            </div>
+                            <h2 style="font-size: 2.5rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; margin-bottom: 0.5rem;">
+                                Cellebrite
+                            </h2>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.5;">
+                                Scaling adoption and certification for a global, high-stakes platform
+                            </p>
+                        </div>
+
+                        <!-- Two Column Layout: Content Left, Image Right -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--slate-200);">
+                            <!-- Left Column: Content -->
+                            <div style="background: white; padding: 2rem;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The System Challenge</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        As demand for certified digital forensic examiners expanded globally, Cellebrite needed a way to scale training and adoption for investigative professionals operating in high-risk, high-accountability environments.
+                                    </p>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0.75rem 0 0 0;">
+                                        Retention risk wasn't product quality — it was confidence, consistency, and proof of competency at scale.
+                                    </p>
+                                </div>
+
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The Architecture Response</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        Designed a structured online academy and certification system aligned to real investigative workflows — complementing in-person training while enabling consistent, scalable product mastery worldwide.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">What We Built</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>7 globally recognized, award-winning certification programs</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>A flexible, plug-and-play training system supporting frequent product updates</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>500+ technical training videos across forensic workflows and intelligence use cases</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Image Box -->
+                            <div style="background: white; padding: 2rem; display: flex; align-items: center;">
+                                <img src="cellebrite-work-20hero-20image.avif" alt="Cellebrite" style="width: 100%; height: auto; display: block;">
+                            </div>
+                        </div>
+
+                        <!-- Impact Section - Full Width with Two Columns -->
+                        <div style="border-top: 1px solid var(--slate-200); padding: 2rem; background: white;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+                                <!-- Left Column: Impact -->
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">Impact</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>30,000+ officers trained and certified globally</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Multi-seven-figure revenue generated from online training</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Enabled global go-to-market and reinforced market-leader positioning</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <!-- Right Column: Testimonial -->
+                                <div>
+                                    <div style="background: var(--slate-50); padding: 1.5rem; border-radius: 4px;">
+                                        <div style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; margin-bottom: 1rem; font-style: italic;">
+                                            "ThinkThru is a very innovative group. If you provide them a general idea, their minds seem to speed into action. The return of ideas is spectacular and outcomes exceed expectations!"
+                                        </div>
+                                        <div style="font-size: 0.875rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">John McHenry</div>
+                                        <div style="font-size: 0.875rem; color: var(--slate-600);">Director of Training, Cellebrite</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 15: Case Study 2 - Reveal Data -->
+            <div class="slide light-bg" data-slide="15">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 2rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                                Case Study
+                            </div>
+                            <h2 style="font-size: 2.5rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; margin-bottom: 0.5rem;">
+                                Reveal Data
+                            </h2>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.5;">
+                                Turning product education into a trusted industry standard
+                            </p>
+                        </div>
+
+                        <!-- Two Column Layout: Content Left, Image Right -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--slate-200);">
+                            <!-- Left Column: Content -->
+                            <div style="background: white; padding: 2rem;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The System Challenge</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        As eDiscovery grew more complex and global, Reveal needed a way to build confidence, competency, and credibility at scale — for customers, partners, and prospects — without expanding headcount.
+                                    </p>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0.75rem 0 0 0;">
+                                        Retention risk wasn't awareness. It was proving mastery in high-stakes, real-world use cases.
+                                    </p>
+                                </div>
+
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The Architecture Response</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        Designed a progressive, role-based education and certification system aligned to real investigative workflows — enabling confidence before purchase, adoption after onboarding, and credibility across the industry.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">What We Built</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>A globally scalable customer academy and certification framework</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Role-based, progressive credentials tied to real product outcomes</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>High-fidelity training, labs, and simulations designed for lean internal ownership</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Image Box -->
+                            <div style="background: white; padding: 1rem; display: flex; align-items: center;">
+                                <img src="reveal-20hero.avif" alt="Reveal Data" style="width: 100%; height: auto; max-height: 400px; object-fit: contain; display: block;">
+                            </div>
+                        </div>
+
+                        <!-- Impact Section - Full Width with Two Columns -->
+                        <div style="border-top: 1px solid var(--slate-200); padding: 2rem; background: white;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+                                <!-- Left Column: Impact -->
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">Impact</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>8,500+ certifications issued within six months</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Global reach across 70+ countries without added headcount</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Certifications became a recognized industry credential, driving organic awareness, sales momentum, and long-term adoption</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <!-- Right Column: Testimonial -->
+                                <div>
+                                    <div style="background: var(--slate-50); padding: 1.5rem; border-radius: 4px;">
+                                        <div style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; margin-bottom: 1rem; font-style: italic;">
+                                            "This video is absolutely incredible. I've shown it to everyone… thanks for going way above and beyond."
+                                        </div>
+                                        <div style="font-size: 0.875rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Michael Griffin</div>
+                                        <div style="font-size: 0.875rem; color: var(--slate-600);">VP of Product Education, Reveal Data</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 16: Case Study 3 - Empathetics -->
+            <div class="slide light-bg" data-slide="16">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 2rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                                Case Study
+                            </div>
+                            <h2 style="font-size: 2.5rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; margin-bottom: 0.5rem;">
+                                Empathetics
+                            </h2>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.5;">
+                                Scaling empathy training across enterprise healthcare systems
+                            </p>
+                        </div>
+
+                        <!-- Two Column Layout: Content Left, Image Right -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--slate-200);">
+                            <!-- Left Column: Content -->
+                            <div style="background: white; padding: 2rem;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The System Challenge</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        Empathetics delivered world-class, in-person empathy training that transformed healthcare teams — but the program relied on highly manual operations and could not scale across hospital systems.
+                                    </p>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0.75rem 0 0 0;">
+                                        The risk wasn't content quality. It was <span style="font-weight: 700;">scaling transformation without losing humanity, credibility, or operational control.</span>
+                                    </p>
+                                </div>
+
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The Architecture Response</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        Designed a complete digital training ecosystem that delivered the foundational 80% of the curriculum online — while preserving the integrity and impact of the remaining 20% delivered live.
+                                    </p>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0.75rem 0 0 0;">
+                                        The system aligned learner experience, hospital administration, reporting, and certification into one cohesive platform.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">What We Built</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>An enterprise LMS ecosystem configured around real hospital workflows</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>B2B licensing, enrollment, and reporting designed for multi-hospital scale</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Operational playbooks enabling independent internal ownership</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Image Box -->
+                            <div style="background: white; padding: 2rem; display: flex; align-items: center; justify-content: center;">
+                                <div style="width: 100%; height: 300px; background: var(--slate-100); border: 1px dashed var(--slate-300); display: flex; align-items: center; justify-content: center; color: var(--slate-400); font-size: 0.875rem;">
+                                    [Image placeholder]
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Impact Section - Full Width with Two Columns -->
+                        <div style="border-top: 1px solid var(--slate-200); padding: 2rem; background: white;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+                                <!-- Left Column: Impact -->
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">Impact</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Fully automated training infrastructure across hospital systems</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Four hospital networks onboarded within seven weeks</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Thousands of healthcare professionals enrolled</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>Internal team operating and evolving the platform independently</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>A sustainable hybrid model blending digital scale with human-centered delivery</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <!-- Right Column: Testimonial -->
+                                <div>
+                                    <div style="background: var(--slate-50); padding: 1.5rem; border-radius: 4px;">
+                                        <div style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; margin-bottom: 1rem; font-style: italic;">
+                                            "ThinkThru brings expertise and empathy to everything they do. Their insights and workflows helped us exceed our goals."
+                                        </div>
+                                        <div style="font-size: 0.875rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.25rem;">Pam Holt</div>
+                                        <div style="font-size: 0.875rem; color: var(--slate-600);">CEO, Empathetics</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 17: Case Study 4 - BAE Systems -->
+            <div class="slide light-bg" data-slide="17">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 2rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                                Case Study
+                            </div>
+                            <h2 style="font-size: 2.5rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; margin-bottom: 0.5rem;">
+                                BAE Systems
+                            </h2>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.5;">
+                                Regulated Environment, Complex Users, High Stakes
+                            </p>
+                        </div>
+
+                        <!-- Two Column Layout: Content Left, Image Right -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--slate-200);">
+                            <!-- Left Column: Content -->
+                            <div style="background: white; padding: 2rem;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The System Challenge</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        Global defense and aerospace organization with complex training and compliance needs. Breaking zones: Activation → Realization.
+                                    </p>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0.75rem 0 0 0;">
+                                        Highly capable systems, but inconsistent user confidence and slow time-to-value across roles.
+                                    </p>
+                                </div>
+
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The Architecture Response</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        A structured education system aligned to outcomes reduced friction, standardized onboarding, and reinforced confidence at scale.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">What We Built</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>[Placeholder content - to be replaced]</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>[Placeholder content - to be replaced]</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>[Placeholder content - to be replaced]</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Image Box -->
+                            <div style="background: white; padding: 2rem; display: flex; align-items: center; justify-content: center;">
+                                <div style="width: 100%; height: 300px; background: var(--slate-100); border: 1px dashed var(--slate-300); display: flex; align-items: center; justify-content: center; color: var(--slate-400); font-size: 0.875rem;">
+                                    [Image placeholder]
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Impact Section - Full Width -->
+                        <div style="border-top: 1px solid var(--slate-200); padding: 2rem; background: white;">
+                            <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">Impact</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>[Placeholder content - to be replaced]</span>
+                                </li>
+                                <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>[Placeholder content - to be replaced]</span>
+                                </li>
+                                <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>[Placeholder content - to be replaced]</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 18: Case Study 5 - Deloitte (SecureRelease) -->
+            <div class="slide light-bg" data-slide="18">
+                <div class="slide-content" style="max-width: 1400px;">
+                    <div style="border: 1px solid var(--slate-200); background: white;">
+                        <!-- Header -->
+                        <div style="padding: 2rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--slate-200); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem;">
+                                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--slate-500);"></div>
+                                Case Study
+                            </div>
+                            <h2 style="font-size: 2.5rem; font-weight: 700; color: var(--slate-900); line-height: 1.2; margin-bottom: 0.5rem;">
+                                Deloitte (SecureRelease)
+                            </h2>
+                            <p style="font-size: 1.125rem; color: var(--slate-600); line-height: 1.5;">
+                                Product Launch Under Time Pressure
+                            </p>
+                        </div>
+
+                        <!-- Two Column Layout: Content Left, Image Right -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--slate-200);">
+                            <!-- Left Column: Content -->
+                            <div style="background: white; padding: 2rem;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The System Challenge</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        New SaaS product supporting FOIA and public-sector workflows. Breaking zones: Belief → Commitment → Activation.
+                                    </p>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0.75rem 0 0 0;">
+                                        Strong product vision, but limited shared understanding across users and stakeholders during launch.
+                                    </p>
+                                </div>
+
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">The Architecture Response</h3>
+                                    <p style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin: 0;">
+                                        Clear educational infrastructure accelerated onboarding, reduced early confusion, and reinforced trust immediately post-sale.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">What We Built</h3>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>[Placeholder content - to be replaced]</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>[Placeholder content - to be replaced]</span>
+                                        </li>
+                                        <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                            <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                            <span>[Placeholder content - to be replaced]</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Image Box -->
+                            <div style="background: white; padding: 2rem; display: flex; align-items: center; justify-content: center;">
+                                <div style="width: 100%; height: 300px; background: var(--slate-100); border: 1px dashed var(--slate-300); display: flex; align-items: center; justify-content: center; color: var(--slate-400); font-size: 0.875rem;">
+                                    [Image placeholder]
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Impact Section - Full Width -->
+                        <div style="border-top: 1px solid var(--slate-200); padding: 2rem; background: white;">
+                            <h3 style="font-size: 1rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">Impact</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>[Placeholder content - to be replaced]</span>
+                                </li>
+                                <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>[Placeholder content - to be replaced]</span>
+                                </li>
+                                <li style="font-size: 0.9375rem; color: var(--slate-700); line-height: 1.6; margin-bottom: 0.375rem; display: flex; gap: 0.5rem;">
+                                    <span style="color: var(--slate-500); flex-shrink: 0;">—</span>
+                                    <span>[Placeholder content - to be replaced]</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide Counter -->
+        <div class="slide-counter" id="slideCounter">1 / 18</div>
+
+        <!-- Help Overlay -->
+        <div class="help-overlay" id="helpOverlay">
+            ← → Navigate | S Toggle Sidebar | P Presentation Mode | 1-9 Jump to Slide | ? Toggle Help
+        </div>
+    </div>
+
+    <script>
+        // Deck State
+        let currentSlide = 0;
+        const totalSlides = 19;
+        let presentationMode = false;
+
+        // DOM Elements
+        const slides = document.querySelectorAll('.slide');
+        const sidebar = document.getElementById('sidebar');
+        const slideCounter = document.getElementById('slideCounter');
+        const helpOverlay = document.getElementById('helpOverlay');
+        const navItems = document.querySelectorAll('.chapter-slides li');
+        const deckContainer = document.querySelector('.deck-container');
+
+        // Initialize
+        function init() {
+            updateSlide(0);
+            updateNavigation();
+            showHelpBriefly();
+        }
+
+        // Update Active Slide
+        function updateSlide(index) {
+            // Bounds checking
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            // Update slides
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+
+            // Update counter
+            currentSlide = index;
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+
+            // Update counter color for dark slides
+            const currentSlideEl = slides[currentSlide];
+            if (currentSlideEl.classList.contains('dark-bg')) {
+                slideCounter.classList.add('dark-slide');
+            } else {
+                slideCounter.classList.remove('dark-slide');
+            }
+
+            // Update navigation
+            updateNavigation();
+        }
+
+        // Update Sidebar Navigation
+        function updateNavigation() {
+            navItems.forEach(item => {
+                const slideIndex = parseInt(item.getAttribute('data-slide'));
+                item.classList.toggle('active', slideIndex === currentSlide);
+            });
+        }
+
+        // Navigation Functions
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                updateSlide(currentSlide + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                updateSlide(currentSlide - 1);
+            }
+        }
+
+        function jumpToSlide(index) {
+            updateSlide(index);
+        }
+
+        // Toggle Presentation Mode
+        function togglePresentationMode() {
+            presentationMode = !presentationMode;
+            deckContainer.classList.toggle('presentation-mode', presentationMode);
+        }
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            sidebar.classList.toggle('hidden');
+        }
+
+        // Show Help Overlay
+        function showHelpBriefly() {
+            helpOverlay.classList.add('visible');
+            setTimeout(() => {
+                helpOverlay.classList.remove('visible');
+            }, 3000);
+        }
+
+        function toggleHelp() {
+            helpOverlay.classList.toggle('visible');
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    jumpToSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    jumpToSlide(totalSlides - 1);
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    togglePresentationMode();
+                    break;
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    toggleSidebar();
+                    break;
+                case '?':
+                    e.preventDefault();
+                    toggleHelp();
+                    break;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    e.preventDefault();
+                    const num = parseInt(e.key) - 1;
+                    if (num < totalSlides) {
+                        jumpToSlide(num);
+                    }
+                    break;
+            }
+        });
+
+        // Click Navigation
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const slideIndex = parseInt(item.getAttribute('data-slide'));
+                jumpToSlide(slideIndex);
+            });
+        });
+
+        // Touch Navigation for Mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) {
+                nextSlide();
+            }
+            if (touchEndX > touchStartX + 50) {
+                prevSlide();
+            }
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
